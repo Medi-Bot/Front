@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:medibot/login_page.dart';
+import 'package:medibot/service/APIService.dart';
 import 'package:medibot/src/medibots_colors.dart';
 import 'package:medibot/src/medibot_texts.dart';
 
@@ -12,10 +13,34 @@ class AccountsPage extends StatefulWidget {
 
 class _AccountsPageState extends State<AccountsPage> {
   List<String> userList = ['Tanguy OZANO', 'tata', 'tatie', 'tutu', 'test'];
+  late Future<String> res;
+  APIService service = APIService();
+
+  @override
+  void initState(){
+    super.initState();
+    res = service.executeTests();
+  }
 
   Widget profileIconButton(Icon profileIcon, String profileText, bool isCreate) {
     return Column(
       children: [
+        FutureBuilder(
+            future: res,
+            builder: (context, snapshot) {
+              if(snapshot.hasData){
+                return Text(snapshot.data!);
+              }
+              else if(snapshot.hasError){
+                print(snapshot.error);
+                return Center(
+                    child: Text(
+                        'Impossible de récup"rer les données : ${snapshot.error}'
+                    )
+                );
+              }
+              return CircularProgressIndicator();
+            }),
         Container(
             width: 70,
             height: 70,

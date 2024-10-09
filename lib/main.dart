@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:medibot/accounts_page.dart';
 import 'package:medibot/login_page.dart';
+import 'package:medibot/service/ServerStarter.dart';
 import 'package:medibot/splash_screen.dart';
 import 'package:medibot/src/medibots_colors.dart';
 import 'package:medibot/src/medibot_texts.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  ServerStarter().startServer();
   runApp(const MyApp());
 }
 
