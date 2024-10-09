@@ -58,15 +58,9 @@ class _LoginPageState extends State<LoginPage> {
               shape: BoxShape.circle,
             ),
             child: CircleAvatar(
-              foregroundColor: Colors.black,
-              backgroundColor: Colors.white,
-              child: IconButton(
-                icon: profileIcon,
-                onPressed: () {
-                  print(widget.username);
-                },
-              ),
-            )),
+                foregroundColor: Colors.black,
+                backgroundColor: Colors.white,
+                child: profileIcon)),
         Text(
           profileText,
           style: TextStyle(fontSize: 20),
@@ -207,8 +201,7 @@ class _LoginPageState extends State<LoginPage> {
                           filled: true,
                         ),
                         validator: (password) {
-                          if (password == null ||
-                              password.isEmpty) {
+                          if (password == null || password.isEmpty) {
                             return MediBotTexts.noPassword;
                           } else {
                             _password = password;
@@ -254,7 +247,8 @@ class _LoginPageState extends State<LoginPage> {
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
-        child: Column(
+        child: SingleChildScrollView(
+            child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
             InkWell(
@@ -265,7 +259,7 @@ class _LoginPageState extends State<LoginPage> {
             SizedBox(height: 10),
             formMode()
           ],
-        ),
+        )),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }

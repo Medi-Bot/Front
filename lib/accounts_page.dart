@@ -106,7 +106,8 @@ class _AccountsPageState extends State<AccountsPage> {
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
-        child: Column(
+        child: SingleChildScrollView(
+            child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
             const Image(image: AssetImage('assets/images/logo/logo.png')),
@@ -115,7 +116,7 @@ class _AccountsPageState extends State<AccountsPage> {
             SizedBox(height: 30),
             squares(3)
           ],
-        ),
+        )),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
