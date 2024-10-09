@@ -9,7 +9,8 @@ abstract class MediBotTexts {
   static String addMyProfile = 'Ajouter mon profil';
   static String logIn = 'Connexion';
 
-  static String loginTooShort = 'Il manque un identifiant';
+  static String noLogin = 'Il manque un identifiant';
   static String loginAlreadyExisting = 'Le login existe déjà';
   static String passwordTooShort = 'Il manque un mot de passe de plus de 8 caractères';
+  static String noPassword = 'Il manque un mot de passe';
 }

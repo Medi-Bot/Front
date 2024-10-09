@@ -115,7 +115,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     validator: (login) {
                       if (login == null || login.isEmpty) {
-                        return MediBotTexts.loginTooShort;
+                        return MediBotTexts.noLogin;
                       } else if (checkIsLoginAlreadyUsed(login)) {
                         return MediBotTexts.loginAlreadyExisting;
                       } else {
@@ -208,9 +208,8 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         validator: (password) {
                           if (password == null ||
-                              password.isEmpty ||
-                              password.length < 8) {
-                            return MediBotTexts.passwordTooShort;
+                              password.isEmpty) {
+                            return MediBotTexts.noPassword;
                           } else {
                             _password = password;
                           }
