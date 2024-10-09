@@ -13,7 +13,8 @@ class AccountsPage extends StatefulWidget {
 class _AccountsPageState extends State<AccountsPage> {
   List<String> userList = ['Tanguy OZANO', 'tata', 'tatie', 'tutu', 'test'];
 
-  Widget profileIconButton(Icon profileIcon, String profileText, bool isCreate) {
+  Widget profileIconButton(
+      Icon profileIcon, String profileText, bool isCreate) {
     return Column(
       children: [
         Container(
@@ -35,12 +36,16 @@ class _AccountsPageState extends State<AccountsPage> {
                       MaterialPageRoute(
                           builder: (context) => LoginPage(
                                 username: profileText,
-                            isCreate: isCreate,
+                                userList: userList,
+                                isCreate: isCreate,
                               )));
                 },
               ),
             )),
-        Text(profileText)
+        Text(
+          profileText,
+          style: TextStyle(fontSize: 20),
+        )
       ],
     );
   }
@@ -51,11 +56,12 @@ class _AccountsPageState extends State<AccountsPage> {
       for (var i = 0; i < ((userList.length) / rowSize).floor(); i++) {
         List<Widget> btnList = [];
         for (var j = 0; j < rowSize; j++) {
-          btnList.add(
-              profileIconButton(Icon(Icons.person), userList[i * rowSize + j], false));
+          btnList.add(profileIconButton(
+              Icon(Icons.person), userList[i * rowSize + j], false));
 
           if (i * rowSize + j == userList.length) {
-            btnList.add(profileIconButton(Icon(Icons.add), MediBotTexts.add, true));
+            btnList.add(
+                profileIconButton(Icon(Icons.add), MediBotTexts.add, true));
             j++;
           }
         }
@@ -68,7 +74,7 @@ class _AccountsPageState extends State<AccountsPage> {
         rowList.add(const Row(
           children: [
             SizedBox(
-              height: 15,
+              height: 25,
             )
           ],
         ));
@@ -81,7 +87,8 @@ class _AccountsPageState extends State<AccountsPage> {
         btnList.add(profileIconButton(
             Icon(Icons.person),
             userList[
-                ((((userList.length - 1) / rowSize).floor())) * rowSize + j], false));
+                ((((userList.length - 1) / rowSize).floor())) * rowSize + j],
+            false));
       }
       btnList.add(profileIconButton(Icon(Icons.add), MediBotTexts.add, true));
       rowList.add(Row(
@@ -103,9 +110,9 @@ class _AccountsPageState extends State<AccountsPage> {
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
             const Image(image: AssetImage('assets/images/logo/logo.png')),
-            SizedBox(height: 5),
-            Text(MediBotTexts.myProfiles),
-            SizedBox(height: 15),
+            SizedBox(height: 10),
+            Text(MediBotTexts.myProfiles, style: TextStyle(fontSize: 20)),
+            SizedBox(height: 30),
             squares(3)
           ],
         ),

@@ -6,9 +6,14 @@ import 'package:medibot/src/medibots_colors.dart';
 import 'package:medibot/src/medibot_texts.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key, required this.username, required this.isCreate});
+  const LoginPage(
+      {super.key,
+      required this.username,
+      required this.userList,
+      required this.isCreate});
 
   final String username;
+  final List<String> userList;
   final bool isCreate;
 
   @override
@@ -18,20 +23,19 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   String _login = '';
-  String _createPassword = '';
-  final _password = TextEditingController();
+  String _password = '';
 
   void createUser() {
     if (_formKey.currentState!.validate()) {
       print('Login: ' + _login);
-      print('Password: ' + _createPassword);
+      print('Password: ' + _password);
       Navigator.of(context).pop();
     }
   }
 
   void logIn() {
-    print('Password: ' + _password.text);
-    if (_password.text.length > 0) {
+    if (_formKey.currentState!.validate()) {
+      print('Password: ' + _password);
       // if correspond to local db
       Navigator.push(
           context,
@@ -63,9 +67,24 @@ class _LoginPageState extends State<LoginPage> {
                 },
               ),
             )),
-        Text(profileText)
+        Text(
+          profileText,
+          style: TextStyle(fontSize: 20),
+        )
       ],
     );
+  }
+
+  bool checkIsLoginAlreadyUsed(String login) {
+    bool isAlreadyUsed = false;
+    login = login.replaceAll(RegExp('_'), ' ');
+    for (String user in widget.userList) {
+      if (user == login.trim()) {
+        isAlreadyUsed = true;
+      }
+    }
+
+    return isAlreadyUsed;
   }
 
   Widget createForm() {
@@ -74,14 +93,19 @@ class _LoginPageState extends State<LoginPage> {
       child: Column(
         children: [
           SizedBox(
+            height: MediaQuery.of(context).size.height * 0.4,
             width: MediaQuery.of(context).size.width * 0.8,
             child: Column(
               children: [
                 Row(
                   children: [
-                    Text(MediBotTexts.login),
+                    Text(
+                      MediBotTexts.login,
+                      style: TextStyle(fontSize: 20),
+                    ),
                   ],
                 ),
+                SizedBox(height: 5),
                 TextFormField(
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
@@ -91,16 +115,24 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     validator: (login) {
                       if (login == null || login.isEmpty) {
-                        return 'Il manque un identifiant';
+                        return MediBotTexts.loginTooShort;
+                      } else if (checkIsLoginAlreadyUsed(login)) {
+                        return MediBotTexts.loginAlreadyExisting;
                       } else {
-                        _login = login;
+                        login.replaceAll(RegExp('_'), ' ');
+                        _login = login.trim();
                       }
                     }),
+                SizedBox(height: 30),
                 Row(
                   children: [
-                    Text(MediBotTexts.password),
+                    Text(
+                      MediBotTexts.password,
+                      style: TextStyle(fontSize: 20),
+                    ),
                   ],
                 ),
+                SizedBox(height: 5),
                 TextFormField(
                   decoration: InputDecoration(
                     border: OutlineInputBorder(
@@ -112,9 +144,9 @@ class _LoginPageState extends State<LoginPage> {
                     if (password == null ||
                         password.isEmpty ||
                         password.length < 8) {
-                      return 'Pas assez de caractères';
+                      return MediBotTexts.passwordTooShort;
                     } else {
-                      _createPassword = password;
+                      _password = password;
                     }
                   },
                   obscureText: true,
@@ -122,17 +154,23 @@ class _LoginPageState extends State<LoginPage> {
               ],
             ),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                  style: ButtonStyle(
-                      backgroundColor:
-                          MaterialStateProperty.all(MediBotColors.color3)),
-                  onPressed: () => createUser(),
-                  child: Text('Ajouter mon profil'))
-            ],
-          )
+          Container(
+              height: 100,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                      style: ButtonStyle(
+                          backgroundColor:
+                              MaterialStateProperty.all(MediBotColors.color3)),
+                      onPressed: () => createUser(),
+                      child: Text(
+                        MediBotTexts.addMyProfile,
+                        style: TextStyle(fontSize: 20),
+                      )),
+                  SizedBox(width: 10),
+                ],
+              ))
         ],
       ),
     );
@@ -140,41 +178,64 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget loginForm() {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        signInIconButton(Icon(Icons.person), widget.username),
         SizedBox(
-          width: MediaQuery.of(context).size.width * 0.8,
-          child: Column(
+          height: MediaQuery.of(context).size.height * 0.4,
+          child: Column(children: [
+            signInIconButton(Icon(Icons.person), widget.username),
+            SizedBox(height: 25),
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.8,
+              child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            MediBotTexts.password,
+                            style: TextStyle(fontSize: 20),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 5),
+                      TextFormField(
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(100.0),
+                          ),
+                          filled: true,
+                        ),
+                        validator: (password) {
+                          if (password == null ||
+                              password.isEmpty ||
+                              password.length < 8) {
+                            return MediBotTexts.passwordTooShort;
+                          } else {
+                            _password = password;
+                          }
+                        },
+                        obscureText: true,
+                      ),
+                    ],
+                  )),
+            )
+          ]),
+        ),
+        Container(
+          height: 100,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Row(
-                children: [
-                  Text(MediBotTexts.password),
-                ],
-              ),
-              TextField(
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(100.0),
-                  ),
-                  filled: true,
-                ),
-                controller: _password,
-                obscureText: true,
-              ),
+              TextButton(
+                  style: ButtonStyle(
+                      backgroundColor:
+                          MaterialStateProperty.all(MediBotColors.color3)),
+                  onPressed: () => logIn(),
+                  child: Text(MediBotTexts.logIn)),
+              SizedBox(width: 10),
             ],
           ),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            TextButton(
-                style: ButtonStyle(
-                    backgroundColor:
-                        MaterialStateProperty.all(MediBotColors.color3)),
-                onPressed: () => logIn(),
-                child: Text('Connexion'))
-          ],
         )
       ],
     );
@@ -202,18 +263,11 @@ class _LoginPageState extends State<LoginPage> {
               child:
                   const Image(image: AssetImage('assets/images/logo/logo.png')),
             ),
-            SizedBox(height: 5),
+            SizedBox(height: 10),
             formMode()
           ],
         ),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
-  }
-
-  @override
-  void dispose() {
-    // Clean up the controller when the widget is disposed.
-    _password.dispose();
-    super.dispose();
   }
 }
