@@ -62,4 +62,8 @@ class DateModel{
   String toString(){
     return '${this.day}/${this.month}/${this.year}';
   }
+
+  String toTimestamp(){
+    return '${this.year}-${this.month > 9 ? this.month : "0${this.month}"}-${this.day > 9 ? this.day : "0${this.day}"} ${this.hour > 9 ? this.hour : "0${this.hour}"}:${this.minute > 9 ? this.minute : "0${this.minute}"}:${this.second > 9 ? this.second : "0${this.second}"}.0';
+  }
 }

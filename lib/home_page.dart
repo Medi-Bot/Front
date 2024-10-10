@@ -1,6 +1,13 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:medibot/models/all_data_dto.dart';
+import 'package:medibot/models/antecedent.dart';
+import 'package:medibot/models/poids.dart';
+import 'package:medibot/models/taille.dart';
 import 'package:medibot/request_page.dart';
+import 'package:medibot/services/main_service.dart';
 import 'package:medibot/src/medibots_colors.dart';
 import 'package:medibot/src/medibot_texts.dart';
 import 'package:medibot/models/date_model.dart';
@@ -19,12 +26,29 @@ class _HomePageState extends State<HomePage> {
   final List<String> _civilities = ['Civilité', 'Monsieur', 'Madame'];
   String _civility = '';
   DateModel _birthDate = DateModel.fromTimestamp(DateTime.now().toString());
-  int _weight = 0;
-  int _height = 0;
+  double _weight = 0;
+  double _height = 0;
   double _imc = 0;
   String _medicalHistory = '';
+  late Future<AllDataDto> data;
+  MainService service = MainService();
+  AllDataDto? allData = null;
 
-  void updateWeight(int weight) {
+  @override
+  void initState() {
+    data = service.getAll();
+    super.initState();
+  }
+
+  void initWeightHeight(double weight, double height){
+    if(_weight == 0 && _height == 0){
+      _weight = weight;
+      _height = height;
+      _imc = _weight / (_height / 100 * _height / 100);
+    }
+  }
+
+  void updateWeight(double weight) {
     setState(() {
       _weight = weight;
     });
@@ -32,7 +56,7 @@ class _HomePageState extends State<HomePage> {
     updateImc();
   }
 
-  void updateHeight(int height) {
+  void updateHeight(double height) {
     setState(() {
       _height = height;
     });
@@ -56,9 +80,25 @@ class _HomePageState extends State<HomePage> {
     print(_imc);
   }
 
-  void sendData() {
+  void sendData() async {
     if (_formKey.currentState!.validate()) {
-      print('Envoyer');
+      if(allData != null){
+        String date = DateModel.fromTimestamp(DateTime.now().toString()).toTimestamp();
+        allData!.getLastInformations()?.dateDeNaissance = _birthDate.toTimestamp();
+        Future
+            .wait([service.addPoids(Poids(date, _weight)),
+              service.addTaille(Taille(date, _height)),
+              service.changeDateNaissance(allData!.getLastInformations()),
+              service.addAntecedent(Antecedent(date, _medicalHistory))])
+            .then((List responses) => {
+              setState(() {
+                data = service.getAll();
+              })
+            })
+            .catchError((e) => false);
+
+      }
+
     }
   }
 
@@ -95,220 +135,290 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Center(
           child: SingleChildScrollView(
-              child: Form(
-                  key: _formKey,
-                  child: SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.8,
-                      child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: <Widget>[
-                            SizedBox(height: 15),
-                            Container(
-                              width: 70,
-                              height: 70,
-                              padding: const EdgeInsets.all(2.0), // borde width
-                              decoration: const BoxDecoration(
-                                color: Colors.grey, // border color
-                                shape: BoxShape.circle,
-                              ),
-                              child: const CircleAvatar(
-                                foregroundColor: Colors.black,
-                                backgroundColor: Colors.white,
-                                child: Icon(Icons.person),
-                              ),
-                            ),
-                            SizedBox(
-                              height: 15,
-                            ),
-                            Row(
-                              children: [
-                                Text(
-                                  'Civilité',
-                                  style: TextStyle(fontSize: 20),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 5),
-                            DropdownMenu<String>(
-                              width: MediaQuery.of(context).size.width * 0.8,
-                              initialSelection: _civilities.first,
-                              onSelected: (String? value) {
-                                if (value != null && !value.isEmpty) {
-                                  _civility = value;
-                                  print(_civility);
-                                } else {
-                                  _civility = '';
-                                }
-                              },
-                              dropdownMenuEntries: _civilities
-                                  .map<DropdownMenuEntry<String>>(
-                                      (String value) {
-                                return DropdownMenuEntry<String>(
-                                    value: value, label: value);
-                              }).toList(),
-                            ),
-                            SizedBox(height: 15),
-                            Row(
-                              children: [
-                                Text(
-                                  'Date de naissance',
-                                  style: TextStyle(fontSize: 20),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 5),
-                            TextFormField(
-                                decoration: InputDecoration(
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(100.0),
+              child : FutureBuilder(
+                future: data,
+                builder: (context, snapshot) {
+                  if(snapshot.hasData){
+                    AllDataDto dto = snapshot.data!;
+                    allData = dto;
+                    _birthDate = DateModel.fromTimestamp(dto.getLastInformations().dateDeNaissance);
+                    initWeightHeight(dto.getLastPoids().poids, dto.getLastTaille().taille);
+                    print(dto.getLastPoids().date);
+                    print(DateModel.fromTimestamp(dto.getLastPoids().date));
+                    print(DateModel.fromTimestamp(dto.getLastPoids().date).toString());
+                    return Form(
+                        key: _formKey,
+                        child: SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.8,
+                            child: Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: <Widget>[
+                                  SizedBox(height: 15),
+                                  Container(
+                                    width: 70,
+                                    height: 70,
+                                    padding: const EdgeInsets.all(2.0), // borde width
+                                    decoration: const BoxDecoration(
+                                      color: Colors.grey, // border color
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const CircleAvatar(
+                                      foregroundColor: Colors.black,
+                                      backgroundColor: Colors.white,
+                                      child: Icon(Icons.person),
+                                    ),
                                   ),
-                                  filled: true,
-                                ),
-                                initialValue: _birthDate.toString(),
-                                onChanged: (value) =>
-                                    updateWeight(int.parse(value)),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Pas de texte';
-                                  } else {
-                                    List<String> cutedValue = value.split("/");
-                                    if (cutedValue.length != 3) {
-                                      return 'Date non valide';
-                                    }
-                                    _birthDate.day = int.parse(cutedValue[0]);
-                                    _birthDate.month = int.parse(cutedValue[1]);
-                                    _birthDate.year = int.parse(cutedValue[2]);
-                                  }
-                                }),
-                            SizedBox(height: 15),
-                            Row(
-                              children: [
-                                Text(
-                                  'Poids (en kg)',
-                                  style: TextStyle(fontSize: 20),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 5),
-                            TextFormField(
-                                decoration: InputDecoration(
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(100.0),
+                                  SizedBox(
+                                    height: 15,
                                   ),
-                                  filled: true,
-                                ),
-                                keyboardType: TextInputType.number,
-                                initialValue: _weight.toString(),
-                                onChanged: (value) =>
-                                    updateWeight(int.parse(value)),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Pas de texte';
-                                  } else if (int.tryParse(value) == null ||
-                                      value.length < 4) {
-                                    return 'Veuillez entrer un nombre valide';
-                                  } else {
-                                    updateWeight(int.parse(value));
-                                  }
-                                }),
-                            SizedBox(height: 15),
-                            Row(
-                              children: [
-                                Text(
-                                  'Taille (en cm)',
-                                  style: TextStyle(fontSize: 20),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 5),
-                            TextFormField(
-                                decoration: InputDecoration(
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(100.0),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'Civilité',
+                                        style: TextStyle(fontSize: 20),
+                                      ),
+                                    ],
                                   ),
-                                  filled: true,
-                                ),
-                                keyboardType: TextInputType.number,
-                                initialValue: _height.toString(),
-                                onChanged: (value) =>
-                                    updateHeight(int.parse(value)),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Pas de texte';
-                                  } else if (double.tryParse(value) == null ||
-                                      value.length < 3) {
-                                    return 'Veuillez entrer un nombre valide';
-                                  } else {
-                                    updateHeight(int.parse(value));
-                                  }
-                                }),
-                            SizedBox(height: 15),
-                            Row(
-                              children: [
-                                Text(
-                                  'IMC',
-                                  style: TextStyle(fontSize: 20),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 5),
-                            TextFormField(
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(100.0),
-                                ),
-                                filled: true,
-                              ),
-                              key: Key(_imc.toStringAsFixed(2)),
-                              initialValue: _imc.toStringAsFixed(2),
-                              enabled: false,
-                            ),
-                            SizedBox(height: 15),
-                            Row(
-                              children: [
-                                Text(
-                                  'Médicaments',
-                                  style: TextStyle(fontSize: 20),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 15),
-                            Row(
-                              children: [
-                                Text(
-                                  'Antécédents médicaux',
-                                  style: TextStyle(fontSize: 20),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 5),
-                            TextFormField(
-                                decoration: InputDecoration(
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(100.0),
+                                  SizedBox(height: 5),
+                                  DropdownMenu<String>(
+                                    width: MediaQuery.of(context).size.width * 0.8,
+                                    initialSelection: _civilities.first,
+                                    onSelected: (String? value) {
+                                      if (value != null && !value.isEmpty) {
+                                        _civility = value;
+                                        print(_civility);
+                                      } else {
+                                        _civility = '';
+                                      }
+                                    },
+                                    dropdownMenuEntries: _civilities
+                                        .map<DropdownMenuEntry<String>>(
+                                            (String value) {
+                                          return DropdownMenuEntry<String>(
+                                              value: value, label: value);
+                                        }).toList(),
                                   ),
-                                  filled: true,
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Pas de texte';
-                                  } else {
-                                    _medicalHistory = value;
-                                    print(_medicalHistory);
-                                  }
-                                }),
-                            SizedBox(
-                              height: 75,
+                                  SizedBox(height: 15),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'Date de naissance',
+                                        style: TextStyle(fontSize: 20),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 5),
+                                  TextFormField(
+                                      decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(100.0),
+                                        ),
+                                        filled: true,
+                                      ),
+                                      initialValue: _birthDate.toString(),
+                                      onChanged: (value) =>
+                                          updateWeight(double.parse(value)),
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Pas de texte';
+                                        } else {
+                                          List<String> cutedValue = value.split("/");
+                                          if (cutedValue.length != 3) {
+                                            return 'Date non valide';
+                                          }
+                                          _birthDate.day = int.parse(cutedValue[0]);
+                                          _birthDate.month = int.parse(cutedValue[1]);
+                                          _birthDate.year = int.parse(cutedValue[2]);
+                                        }
+                                      }),
+                                  SizedBox(height: 15),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'Poids (en kg)',
+                                        style: TextStyle(fontSize: 20),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 5),
+                                  SizedBox(
+                                    height: min(dto.poids.length * 20, 100) ,
+                                    child: dto.poids.isNotEmpty ? ListView.builder(
+                                      reverse: true,
+                                      itemCount: dto.poids.length,
+                                      itemBuilder: (context, index){
+                                        index = dto.poids.length - index - 1;
+                                        return Row(
+                                          children: [
+                                            Text(DateModel.fromTimestamp(dto.poids[index].date).toString()),
+                                            Expanded(child: Container()),
+                                            Text(dto.poids[index].poids.toString())
+                                          ],
+                                        );
+                                      }
+                                    ) : Container(),
+                                  ),
+                                  SizedBox(height: 5),
+                                  TextFormField(
+                                      decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(100.0),
+                                        ),
+                                        filled: true,
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                      initialValue: dto.getLastPoids().poids.toString(),
+                                      onChanged: (value) =>
+                                          updateWeight(double.parse(value)),
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Pas de texte';
+                                        } else {
+                                          updateWeight(double.parse(value));
+                                        }
+                                      }),
+                                  SizedBox(height: 15),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'Taille (en cm)',
+                                        style: TextStyle(fontSize: 20),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 5),
+                                  SizedBox(
+                                    height: min(dto.tailles.length * 20, 100),
+                                    child: dto.tailles.isNotEmpty ? ListView.builder(
+                                      reverse: true,
+                                        itemCount: dto.tailles.length,
+                                        itemBuilder: (context, index){
+                                          index = dto.tailles.length - index - 1;
+                                          return Row(
+                                            children: [
+                                              Text(DateModel.fromTimestamp(dto.tailles[index].date).toString()),
+                                              Expanded(child: Container()),
+                                              Text(dto.tailles[index].taille.toString())
+                                            ],
+                                          );
+                                        }
+                                    ) : Container(),
+                                  ),
+                                  SizedBox(height: 5),
+                                  TextFormField(
+                                      decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(100.0),
+                                        ),
+                                        filled: true,
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                      initialValue: dto.getLastTaille().taille.toString(),
+                                      onChanged: (value) =>
+                                          updateHeight(double.parse(value)),
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Pas de texte';
+                                        } else if (double.tryParse(value) == null ||
+                                            value.length < 3) {
+                                          return 'Veuillez entrer un nombre valide';
+                                        } else {
+                                          updateHeight(double.parse(value));
+                                        }
+                                      }),
+                                  SizedBox(height: 15),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'IMC',
+                                        style: TextStyle(fontSize: 20),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 5),
+                                  TextFormField(
+                                    decoration: InputDecoration(
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(100.0),
+                                      ),
+                                      filled: true,
+                                    ),
+                                    key: Key(_imc.toStringAsFixed(2)),
+                                    initialValue: _imc.toStringAsFixed(2),
+                                    enabled: false,
+                                  ),
+                                  SizedBox(height: 15),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'Médicaments',
+                                        style: TextStyle(fontSize: 20),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 15),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'Antécédents médicaux',
+                                        style: TextStyle(fontSize: 20),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 5),
+                                  SizedBox(
+                                    height: min(dto.antecedents.length * 20, 100),
+                                    child: dto.antecedents.isNotEmpty ? ListView.builder(
+                                      reverse: true,
+                                      itemCount: dto.antecedents.length,
+                                      itemBuilder: (context, index){
+                                        index = dto.antecedents.length - index - 1;
+                                        return Row(
+                                          children: [
+                                            Text(DateModel.fromTimestamp(dto.antecedents[index].date).toString()),
+                                            Expanded(child: Container()),
+                                            Text(dto.antecedents[index].description)
+                                          ],
+                                        );
+                                      }
+                                    ) : Container(),
+                                  ),
+                                  SizedBox(height: 5),
+                                  TextFormField(
+                                      decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(100.0),
+                                        ),
+                                        filled: true,
+                                      ),
+                                      validator: (value) {
+                                        _medicalHistory = value ?? "";
+                                        print(_medicalHistory);
+                                      }),
+                                  SizedBox(
+                                    height: 75,
+                                  )
+                                ]
                             )
-                          ]))))),
+                        )
+                    );
+                  }
+                  else if(snapshot.hasError){
+                    return Text(snapshot.error!.toString());
+                  }
+                  return CircularProgressIndicator();
+                }
+              )
+          )
+      ),
       floatingActionButton: TextButton(
-          style: ButtonStyle(
-              backgroundColor: MaterialStateProperty.all(MediBotColors.color3)),
-          onPressed: () => sendData(),
-          child: const Text(
-            'Envoyer',
-            style: TextStyle(fontSize: 20),
-          )),
+        style: ButtonStyle(
+            backgroundColor: MaterialStateProperty.all(MediBotColors.color3)),
+        onPressed: () => sendData(),
+        child: const Text(
+          'Envoyer',
+          style: TextStyle(fontSize: 20),
+        )),
     );
   }
 }

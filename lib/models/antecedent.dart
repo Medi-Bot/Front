@@ -7,4 +7,11 @@ class Antecedent {
   Antecedent.fromJson(Map<String, dynamic> json)
       : date = json['date'],
         description = json['description'];
+
+  Map<String, dynamic> toJson() {
+    return {
+      "date" : this.date,
+      "description" : this.description,
+    };
+  }
 }

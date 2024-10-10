@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:medibot/login_page.dart';
+import 'package:medibot/services/main_service.dart';
 import 'package:medibot/src/medibots_colors.dart';
 import 'package:medibot/src/medibot_texts.dart';
 
@@ -11,7 +12,15 @@ class AccountsPage extends StatefulWidget {
 }
 
 class _AccountsPageState extends State<AccountsPage> {
-  List<String> userList = ['Tanguy OZANO', 'tata', 'tatie', 'tutu', 'test'];
+  late List<String> userList;
+  late Future<List<String>> futUserList;
+  MainService service = MainService();
+
+  @override
+  void initState() {
+    futUserList = service.getUserList();
+    super.initState();
+  }
 
   Widget profileIconButton(
       Icon profileIcon, String profileText, bool isCreate) {
@@ -30,15 +39,20 @@ class _AccountsPageState extends State<AccountsPage> {
               backgroundColor: Colors.white,
               child: IconButton(
                 icon: profileIcon,
-                onPressed: () {
-                  Navigator.push(
+                onPressed: () async {
+                  await Navigator.push(
                       context,
                       MaterialPageRoute(
                           builder: (context) => LoginPage(
                                 username: profileText,
                                 userList: userList,
                                 isCreate: isCreate,
-                              )));
+                              )
+                      )
+                  );
+                  setState(() {
+                    futUserList = service.getUserList();
+                  });
                 },
               ),
             )),
@@ -107,14 +121,26 @@ class _AccountsPageState extends State<AccountsPage> {
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
         child: SingleChildScrollView(
-            child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: <Widget>[
-            const Image(image: AssetImage('assets/images/logo/logo.png')),
-            SizedBox(height: 10),
-            Text(MediBotTexts.myProfiles, style: TextStyle(fontSize: 20)),
-            SizedBox(height: 30),
-            squares(3)
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: <Widget>[
+              const Image(image: AssetImage('assets/images/logo/logo.png')),
+              SizedBox(height: 10),
+              Text(MediBotTexts.myProfiles, style: TextStyle(fontSize: 20)),
+              SizedBox(height: 30),
+              FutureBuilder(
+                  future: futUserList,
+                  builder: (context, snapshot){
+                    if(snapshot.hasData){
+                      userList = snapshot.data!;
+                      return squares(3);
+                    }
+                    else if(snapshot.hasError){
+                      return Text(snapshot.error!.toString());
+                    }
+                    return CircularProgressIndicator();
+                  }
+              )
           ],
         )),
       ), // This trailing comma makes auto-formatting nicer for build methods.

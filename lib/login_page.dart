@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:medibot/home_page.dart';
+import 'package:medibot/services/main_service.dart';
 import 'package:medibot/src/medibots_colors.dart';
 import 'package:medibot/src/medibot_texts.dart';
 
@@ -21,28 +22,39 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  bool _error = false;
   final _formKey = GlobalKey<FormState>();
   String _login = '';
   String _password = '';
+  MainService service = MainService();
 
-  void createUser() {
+  void createUser() async {
     if (_formKey.currentState!.validate()) {
       print('Login: ' + _login);
       print('Password: ' + _password);
+      await service.selectProfile(_login, _password);
+      await service.selectProfile("", "");
       Navigator.of(context).pop();
     }
   }
 
-  void logIn() {
-    if (_formKey.currentState!.validate()) {
+  void logIn() async {
+    if (_formKey.currentState!.validate())  {
+      print('Login: ' + _login);
       print('Password: ' + _password);
-      // if correspond to local db
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => HomePage(
-                    username: widget.username,
-                  )));
+      if(await service.selectProfile(_login, _password)){
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => HomePage(
+                  username: widget.username,
+                )));
+      }
+      else{
+        setState(() {
+          _error = true;
+        });
+      }
     }
   }
 
@@ -170,9 +182,14 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget loginForm() {
+  Widget loginForm(String profileName) {
+    _login = profileName;
     return Column(
       children: [
+        Visibility(
+          visible: _error,
+            child: Text("Mauvais mot de passe")
+        ),
         SizedBox(
           height: MediaQuery.of(context).size.height * 0.4,
           child: Column(children: [
@@ -237,7 +254,7 @@ class _LoginPageState extends State<LoginPage> {
     if (widget.isCreate) {
       return createForm();
     } else {
-      return loginForm();
+      return loginForm(widget.username);
     }
   }
 

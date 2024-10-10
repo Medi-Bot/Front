@@ -1,4 +1,5 @@
 import 'package:medibot/models/antecedent.dart';
+import 'package:medibot/models/date_model.dart';
 import 'package:medibot/models/poids.dart';
 import 'package:medibot/models/taille.dart';
 import 'historique_communication.dart';
@@ -24,4 +25,24 @@ class AllDataDto {
         medicamentUtilises = json['medicamentUtilises'].map<MedicamentUtilise>((e) => MedicamentUtilise.fromJson(e)).toList(),
         poids = json['poids'].map<Poids>((e) => Poids.fromJson(e)).toList(),
         tailles = json['tailles'].map<Taille>((e) => Taille.fromJson(e)).toList();
+
+  Antecedent getLastAntecedent(){
+    return antecedents.isNotEmpty ? antecedents[antecedents.length-1] : Antecedent(DateModel.zero().toTimestamp(), "");
+  }
+
+  HistoriqueCommunication getLastHistoriqueCommunication(){
+    return historiqueCommunications.isNotEmpty ? historiqueCommunications[historiqueCommunications.length-1] : HistoriqueCommunication(DateModel.zero().toTimestamp(), "", "");
+  }
+
+  Taille getLastTaille(){
+    return tailles.isNotEmpty ? tailles[tailles.length-1] : Taille(DateModel.zero().toTimestamp(), 0);
+  }
+
+  Poids getLastPoids(){
+    return poids.isNotEmpty ? poids[poids.length-1] : Poids(DateModel.zero().toTimestamp(), 0);
+  }
+
+  Informations getLastInformations(){
+    return informations.isNotEmpty ? informations[informations.length-1] : Informations(0, DateTime.now().toString());
+  }
 }

@@ -7,4 +7,13 @@ class Poids {
   Poids.fromJson(Map<String, dynamic> json)
       : date = json['date'],
         poids = json['poids'];
+
+
+
+  Map<String, dynamic> toJson() {
+    return {
+      "date" : this.date,
+      "poids" : this.poids.toStringAsFixed(2),
+    };
+  }
 }
