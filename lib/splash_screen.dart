@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:medibot/accounts_page.dart';
 import 'package:medibot/src/medibot_texts.dart';
+import 'package:medibot/src/medibots_colors.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -22,7 +23,7 @@ class _SplashPageState extends State<SplashPage> {
     super.initState();
 
     Timer(
-        const Duration(seconds: 3),
+        const Duration(seconds: 2),
             () => Navigator.pushReplacement(
                 context, MaterialPageRoute(builder: (context) => AccountsPage())));
   }
@@ -31,12 +32,11 @@ class _SplashPageState extends State<SplashPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        child: const Center(
-            child: Column(children: [
-              SizedBox(
-                  height: 15
-              ),
-              CircularProgressIndicator(color: Colors.black)
+        child: Center(
+            child: Column(mainAxisAlignment: MainAxisAlignment.spaceBetween,children: [
+              const Image(image: AssetImage('assets/images/logo/logo.png')),
+              CircularProgressIndicator(color: MediBotColors.color3),
+              Text('')
             ],)
         ),
       ),
