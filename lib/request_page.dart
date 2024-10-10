@@ -38,6 +38,7 @@ class _RequestPageState extends State<RequestPage> {
               InkWell(
                 onTap: () => Navigator.of(context)
                   ..pop()
+                  ..pop()
                   ..pop(),
                 child: const Image(
                     image: AssetImage('assets/images/logo/logo.png')),
