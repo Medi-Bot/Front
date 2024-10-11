@@ -3,12 +3,13 @@ import 'package:http/http.dart' as http;
 import 'package:medibot/models/all_data_dto.dart';
 import 'package:medibot/models/antecedent.dart';
 import 'package:medibot/models/informations.dart';
+import 'package:medibot/models/medicament_utilise.dart';
 import 'package:medibot/models/taille.dart';
 
 import '../models/poids.dart';
 
 class MainService {
-  static final String uri = 'http://10.60.12.101:8081/';
+  static const String uri = 'http://10.60.12.101:8081/';
 
   Future<AllDataDto> getAll() async {
     final response = await http.get(Uri.parse('${uri}get-all'));
@@ -63,6 +64,15 @@ class MainService {
 
   Future<bool> addAntecedent(Antecedent antecedent) async {
     final response = await http.post(Uri.parse('${uri}antecedent'), body: jsonEncode(antecedent.toJson()), headers: getHeaderContentType());
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  Future<bool> addMedicamentUtilise(MedicamentUtilise medicament) async {
+    final response = await http.post(Uri.parse('${uri}medicamentUtilise'), body: jsonEncode(medicament.toJson()), headers: getHeaderContentType());
     if (response.statusCode == 200) {
       return true;
     } else {

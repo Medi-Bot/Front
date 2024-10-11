@@ -11,4 +11,16 @@ class MedicamentUtilise {
         nom = json["id"]['nom'],
         frequence = json['frequence'],
         dateFin = json['dateFin'];
+
+  Map<String, dynamic> toJson() {
+    return
+      {
+        "id": {
+          "dateDebut": dateDebut,
+          "nom": nom
+        },
+        "frequence": frequence,
+        "dateFin": dateFin
+      };
+  }
 }

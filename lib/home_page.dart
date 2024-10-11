@@ -2,12 +2,18 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:medibot/models/medicament_utilise.dart';
 import 'package:medibot/models/treatment_model.dart';
 import 'package:medibot/request_page.dart';
 import 'package:medibot/services/main_service.dart';
 import 'package:medibot/src/medibots_colors.dart';
 import 'package:medibot/src/medibot_texts.dart';
 import 'package:medibot/models/date_model.dart';
+
+import 'models/all_data_dto.dart';
+import 'models/antecedent.dart';
+import 'models/poids.dart';
+import 'models/taille.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.username});
@@ -28,7 +34,6 @@ class _HomePageState extends State<HomePage> {
   double _height = 0;
   double _imc = 0;
   String _medicalHistory = '';
-  List<Treatment> treatments = [];
   String _tempTreatmentName = '';
   DateModel _tempTreatmentStartDate =
   DateModel.fromTimestamp(DateTime.now().toString());
@@ -85,12 +90,12 @@ class _HomePageState extends State<HomePage> {
     if (_formKey.currentState!.validate()) {
       if(allData != null){
         String date = DateModel.fromTimestamp(DateTime.now().toString()).toTimestamp();
-        allData!.getLastInformations()?.dateDeNaissance = _birthDate.toTimestamp();
+        allData!.getLastInformations().dateDeNaissance = _birthDate.toTimestamp();
         Future
-            .wait([service.addPoids(Poids(date, _weight)),
-              service.addTaille(Taille(date, _height)),
+            .wait([_weight != 0 ? service.addPoids(Poids(date, _weight)) : Future.delayed(Duration(milliseconds: 0)),
+              _height != 0 ? service.addTaille(Taille(date, _height)) : Future.delayed(Duration(milliseconds: 0)),
               service.changeDateNaissance(allData!.getLastInformations()),
-              service.addAntecedent(Antecedent(date, _medicalHistory))])
+              _medicalHistory != "" ? service.addAntecedent(Antecedent(date, _medicalHistory)) : Future.delayed(Duration(milliseconds: 0))])
             .then((List responses) => {
               setState(() {
                 data = service.getAll();
@@ -103,47 +108,44 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void addTreatment() {
-    print('Ajouter');
+  void addTreatment() async {
     if (_treatmentFormKey.currentState!.validate()) {
+      await service.addMedicamentUtilise(MedicamentUtilise(_tempTreatmentStartDate.toTimestamp(), _tempTreatmentName, _tempTreatmentFrequency, _tempTreatmentEndDate.toTimestamp()));
       setState(() {
-        treatments.add(new Treatment(
-            _tempTreatmentName,
-            _tempTreatmentStartDate,
-            _tempTreatmentFrequency,
-            _tempTreatmentEndDate));
         _tempTreatmentName = '';
         _tempTreatmentStartDate =
             DateModel.fromTimestamp(DateTime.now().toString());
         _tempTreatmentFrequency = '';
         _tempTreatmentEndDate =
             DateModel.fromTimestamp(DateTime.now().toString());
+        data = service.getAll();
       });
-      print(treatments[0].name);
     }
   }
 
   Widget showMyTreatments() {
     List<Widget> rowList = [];
-    for (Treatment treatment in treatments) {
-      rowList.add(Row(children: [
-        Column(
-          children: [
-            Row(
-              children: [Text('- ' + treatment.name + ': ')],
-            ),
-            Row(
-              children: [
-                Text('Du ' + treatment.startDate.toString()),
-                Text(' au ' + treatment.endDate.toString())
-              ],
-            ),
-            Row(
-              children: [Text('Fréquence: ' + treatment.frequency)],
-            )
-          ],
-        )
-      ]));
+    if(allData != null){
+      for (MedicamentUtilise medicament in allData!.medicamentUtilises) {
+        rowList.add(Row(children: [
+          Column(
+            children: [
+              Row(
+                children: [Text('- ' + medicament.nom + ': ')],
+              ),
+              Row(
+                children: [
+                  Text('Du ' + DateModel.fromTimestamp(medicament.dateDebut).toString()),
+                  Text(' au ' + DateModel.fromTimestamp(medicament.dateFin).toString())
+                ],
+              ),
+              Row(
+                children: [Text('Fréquence: ' + medicament.frequence)],
+              )
+            ],
+          )
+        ]));
+      }
     }
     return SizedBox(
       child: Column(
@@ -176,6 +178,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 filled: true,
               ),
+              initialValue: _tempTreatmentName,
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Pas de texte';
@@ -201,7 +204,7 @@ class _HomePageState extends State<HomePage> {
                 filled: true,
               ),
               initialValue: _birthDate.toString(),
-              onChanged: (value) => updateWeight(int.parse(value)),
+              onChanged: (value) => updateWeight(double.parse(value)),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Pas de texte';
@@ -256,7 +259,7 @@ class _HomePageState extends State<HomePage> {
                 filled: true,
               ),
               initialValue: _birthDate.toString(),
-              onChanged: (value) => updateWeight(int.parse(value)),
+              onChanged: (value) => updateWeight(double.parse(value)),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Pas de texte';
